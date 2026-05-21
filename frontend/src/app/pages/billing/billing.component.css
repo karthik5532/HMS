@@ -1,0 +1,78 @@
+/* ===== BILLING PAGE (Pure PrimeNG Tools) ===== */
+.billing-page {
+  padding: 2rem;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+/* Override PrimeNG Default Shadows for "Neat" Look */
+::ng-deep .p-toolbar {
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 1.25rem 2rem;
+}
+
+::ng-deep .p-card {
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02) !important;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+::ng-deep .p-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05) !important;
+}
+::ng-deep .p-card .p-card-body {
+  padding: 1.5rem !important;
+}
+
+::ng-deep .p-panel .p-panel-header {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  padding: 1.5rem 2rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+::ng-deep .p-panel .p-panel-content {
+  border: 1px solid #e2e8f0;
+  border-top: none;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+
+/* Typography Overrides */
+.text-slate-800 { color: #1e293b !important; }
+.text-slate-600 { color: #475569 !important; }
+.text-slate-500 { color: #64748b !important; }
+.text-slate-400 { color: #94a3b8 !important; }
+.text-slate-300 { color: #cbd5e1 !important; }
+.text-indigo-500 { color: #6366f1 !important; }
+
+/* Backgrounds & Colors */
+.bg-red-50 { background-color: #fef2f2 !important; }
+.bg-emerald-50 { background-color: #ecfdf5 !important; }
+.bg-amber-50 { background-color: #fffbeb !important; }
+.bg-slate-100 { background-color: #f1f5f9 !important; }
+
+.text-red-500 { color: #ef4444 !important; }
+.text-emerald-500 { color: #10b981 !important; }
+.text-amber-500 { color: #f59e0b !important; }
+
+/* Utilities */
+.tracking-wide { letter-spacing: 0.05em !important; }
+.mb-2 { margin-bottom: 0.5rem !important; }
+.mb-4 { margin-bottom: 1.5rem !important; }
+.border-circle { border-radius: 50% !important; }
+
+::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1rem;
+}

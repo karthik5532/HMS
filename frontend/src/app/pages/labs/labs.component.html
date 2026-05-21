@@ -1,0 +1,206 @@
+<div class="labs-page">
+  <p-toast></p-toast>
+  <p-confirmDialog [style]="{width:'420px'}"></p-confirmDialog>
+
+  <!-- Page Header -->
+  <div class="labs-header">
+    <div class="header-text">
+      <h1><i class="pi pi-flask" style="color:#6366f1;margin-right:10px;"></i>Diagnostic Laboratory</h1>
+      <p>Pathology · Radiology · Clinical Diagnostics</p>
+    </div>
+    <p-button label="New Lab Request" icon="pi pi-plus" (onClick)="openNew()"
+      styleClass="p-button-primary new-lab-btn"></p-button>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-row">
+    <div class="stat-card total">
+      <div class="stat-icon"><i class="pi pi-list"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Total Reports</span>
+        <span class="stat-value">{{ totalCount }}</span>
+      </div>
+    </div>
+    <div class="stat-card pending">
+      <div class="stat-icon"><i class="pi pi-clock"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Pending</span>
+        <span class="stat-value">{{ pendingCount }}</span>
+      </div>
+    </div>
+    <div class="stat-card progress">
+      <div class="stat-icon"><i class="pi pi-sync"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">In Progress</span>
+        <span class="stat-value">{{ inProgressCount }}</span>
+      </div>
+    </div>
+    <div class="stat-card completed">
+      <div class="stat-icon"><i class="pi pi-check-circle"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Completed</span>
+        <span class="stat-value">{{ completedCount }}</span>
+      </div>
+    </div>
+  </div>
+  <!-- Data Table -->
+  <div class="table-card">
+    <p-table [value]="filteredReports" [paginator]="true" [rows]="8" [loading]="loading"
+      [rowsPerPageOptions]="[5,8,15,25]" [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} reports"
+      styleClass="p-datatable-sm p-datatable-striped p-datatable-gridlines" [tableStyle]="{'min-width': '60rem'}"
+      [globalFilterFields]="['patientName','testType','id','requestedBy']">
+      <ng-template pTemplate="caption">
+        <div class="table-caption">
+          <span class="p-input-icon-left search-wrap">
+            <i class="pi pi-search"></i>
+            <input pInputText type="text" [(ngModel)]="searchTerm" (input)="onSearch()"
+              placeholder="Search by patient, test, order ID..." class="search-field" />
+          </span>
+          <div class="caption-right">
+            <span class="record-count">{{ filteredReports.length }} record(s)</span>
+            <p-button icon="pi pi-refresh" styleClass="p-button-text p-button-secondary" pTooltip="Refresh"
+              (onClick)="loadReports()"></p-button>
+          </div>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="id" style="width:110px">Order ID <p-sortIcon field="id"></p-sortIcon></th>
+          <th pSortableColumn="patientName">Patient <p-sortIcon field="patientName"></p-sortIcon></th>
+          <th>Diagnostic Test</th>
+          <th>Requested By</th>
+          <th pSortableColumn="date" style="width:130px">Sample Date <p-sortIcon field="date"></p-sortIcon></th>
+          <th style="width:120px">Status</th>
+          <th style="width:110px">Result</th>
+          <th style="width:100px;text-align:center">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-report>
+        <tr>
+          <td><span class="order-id-badge">#{{ report.id }}</span></td>
+          <td>
+            <div class="patient-cell">
+              <div class="patient-avatar">{{ report.patientName?.charAt(0) || '?' }}</div>
+              <strong>{{ report.patientName }}</strong>
+            </div>
+          </td>
+          <td>
+            <span class="test-type-chip">{{ report.testType }}</span>
+          </td>
+          <td>
+            <span><i class="pi pi-user-md" style="margin-right:5px;color:#6366f1;font-size:0.8rem;"></i>{{
+              report.requestedBy }}</span>
+          </td>
+          <td>{{ report.date | date:'dd MMM yyyy' }}</td>
+          <td>
+            <p-tag [value]="report.status" [severity]="getSeverity(report.status)" [rounded]="true"></p-tag>
+          </td>
+          <td>
+            <p-tag [value]="report.result || 'Pending'" [severity]="getResultSeverity(report.result)"
+              [rounded]="true"></p-tag>
+          </td>
+          <td>
+            <div class="action-btns">
+              <p-button icon="pi pi-download" styleClass="p-button-text p-button-success p-button-sm"
+                (onClick)="downloadReport(report)" pTooltip="Download Report"></p-button>
+              <p-button icon="pi pi-pencil" styleClass="p-button-text p-button-info p-button-sm"
+                (onClick)="editReport(report)" pTooltip="Edit Report"></p-button>
+              <p-button icon="pi pi-trash" styleClass="p-button-text p-button-danger p-button-sm"
+                (onClick)="deleteReport(report)" pTooltip="Delete"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8">
+            <div class="empty-state">
+              <i class="pi pi-inbox" style="font-size:2.5rem;color:#94a3b8;"></i>
+              <p>No diagnostic records found.</p>
+              <p-button label="Add First Report" icon="pi pi-plus" styleClass="p-button-outlined"
+                (onClick)="openNew()"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- Add / Edit Lab Report Dialog -->
+<p-dialog [(visible)]="displayDialog" [header]="isEditing ? 'Edit Lab Report' : 'New Lab Request'" [modal]="true"
+  [style]="{width:'560px'}" [draggable]="false" [resizable]="false" styleClass="lab-dialog">
+  <ng-template pTemplate="header">
+    <div class="dialog-header-lab">
+      <i class="pi pi-flask" style="color:#6366f1;font-size:1.3rem;margin-right:10px;"></i>
+      <span>{{ isEditing ? 'Edit Lab Report' : 'Initiate Lab Request' }}</span>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="content">
+    <div class="dialog-form">
+
+      <div class="field">
+        <label for="patientName"><i class="pi pi-user"></i> Patient Name <span class="req">*</span></label>
+        <input type="text" pInputText id="patientName" [(ngModel)]="report.patientName"
+          placeholder="Full name of patient" class="w-full" />
+      </div>
+
+      <div class="field">
+        <label for="testType"><i class="pi pi-search-plus"></i> Diagnostic Test <span class="req">*</span></label>
+        <p-select id="testType" [(ngModel)]="report.testType" [options]="testTypeOptions" placeholder="Select test type"
+          [showClear]="true" styleClass="w-full" appendTo="body">
+        </p-select>
+      </div>
+
+      <div class="field">
+        <label for="requestedBy"><i class="pi pi-user-plus"></i> Requested By (Doctor) <span
+            class="req">*</span></label>
+        <input type="text" pInputText id="requestedBy" [(ngModel)]="report.requestedBy"
+          placeholder="Consulting doctor name" class="w-full" />
+      </div>
+
+      <div class="form-row-2">
+        <div class="field">
+          <label for="date"><i class="pi pi-calendar"></i> Sample Date <span class="req">*</span></label>
+          <p-datepicker [(ngModel)]="report.date" id="date" dateFormat="yy-mm-dd" [showIcon]="true" appendTo="body"
+            styleClass="w-full">
+          </p-datepicker>
+        </div>
+        <div class="field">
+          <label for="status"><i class="pi pi-info-circle"></i> Status</label>
+          <p-select [(ngModel)]="report.status" id="status" [options]="statusOptions" placeholder="Select Status"
+            styleClass="w-full" appendTo="body">
+          </p-select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="result"><i class="pi pi-chart-bar"></i> Outcome / Result</label>
+        <p-select [(ngModel)]="report.result" id="result" [options]="resultOptions" placeholder="Select Result"
+          styleClass="w-full" appendTo="body">
+        </p-select>
+      </div>
+
+      <div class="field" *ngIf="report.result === 'Abnormal' || report.result === 'Normal'">
+        <label for="notes"><i class="pi pi-file-edit"></i> Clinical Notes / Remarks</label>
+        <textarea pTextarea id="notes" [(ngModel)]="report.notes" rows="3"
+          placeholder="Enter additional remarks or findings..." class="w-full"></textarea>
+      </div>
+
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer">
+      <p-button label="Cancel" icon="pi pi-times" styleClass="p-button-text p-button-secondary"
+        (onClick)="displayDialog = false"></p-button>
+      <p-button [label]="isEditing ? 'Update Report' : 'Submit Request'" icon="pi pi-check"
+        styleClass="p-button-primary" (onClick)="saveReport()"></p-button>
+    </div>
+  </ng-template>
+</p-dialog>

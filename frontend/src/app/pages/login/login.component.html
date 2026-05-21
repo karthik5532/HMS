@@ -1,0 +1,113 @@
+<div class="split-auth-container">
+    <!-- Left Visual Section -->
+    <div class="auth-visual-side">
+        <div class="visual-overlay"></div>
+        <div class="visual-content">
+            <div class="logo-box flex flex-column align-items-center mb-5 transition-all transition-duration-300 hover:-translate-y-1">
+                <div class="brand-icon-wrapper relative bg-white border-circle p-3 shadow-6 mb-4" style="width: 140px; height: 140px;">
+                    <svg viewBox="0 0 300 240" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                      <defs>
+                        <linearGradient id="greenGradLogin" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stop-color="#22c55e" />
+                          <stop offset="100%" stop-color="#15803d" />
+                        </linearGradient>
+                        <linearGradient id="blueGradLogin" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stop-color="#3b82f6" />
+                          <stop offset="100%" stop-color="#1e3a8a" />
+                        </linearGradient>
+                        <g id="handLogin">
+                           <path d="M 148 210 C 120 210 70 190 50 130 C 45 110 40 95 40 90 C 40 85 46 85 48 90 C 55 105 60 120 78 140 L 72 105 C 70 98 76 98 78 105 C 85 125 90 135 102 155 L 100 125 C 98 118 104 118 106 125 C 112 140 125 160 148 185 Z" fill="url(#greenGradLogin)" />
+                        </g>
+                        <g id="figureLogin">
+                           <circle cx="108" cy="90" r="14" />
+                           <path d="M 105 115 C 90 110 75 100 58 85 C 64 95 80 125 95 130 C 105 160 115 190 130 205 C 125 185 125 155 120 140 C 130 125 140 100 145 80 C 135 90 125 110 118 115 Z" />
+                        </g>
+                      </defs>
+            
+                      <path d="M 45 110 A 105 105 0 0 1 255 110" fill="none" stroke="url(#greenGradLogin)" stroke-width="6" stroke-linecap="round" />
+                      
+                      <use href="#handLogin" />
+                      <use href="#handLogin" transform="translate(300, 0) scale(-1, 1)" />
+            
+                      <use href="#figureLogin" fill="url(#blueGradLogin)" />
+                      <use href="#figureLogin" fill="url(#blueGradLogin)" transform="translate(300, 0) scale(-1, 1)" />
+            
+                      <g fill="url(#blueGradLogin)">
+                        <rect x="145" y="150" width="10" height="28" rx="2" />
+                        <rect x="136" y="159" width="28" height="10" rx="2" />
+                      </g>
+                    </svg>
+                </div>
+                <div class="text-center bg-white border-round-xl px-4 py-2 shadow-6">
+                    <h1 class="m-0 font-black tracking-tighter" style="font-size: 2.8rem; line-height: 1;">
+                        <span style="background: linear-gradient(to right, #22c55e, #15803d); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">CITY</span>
+                        <span style="background: linear-gradient(to right, #3b82f6, #1e3a8a); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;" class="ml-2">CARE</span>
+                    </h1>
+                    <p class="m-0 font-bold mt-1" style="letter-spacing: 5px; color: #1e3a8a; font-size: 1.1rem; text-transform: uppercase;">
+                        Hospitals
+                    </p>
+                </div>
+            </div>
+            <div class="visual-features">
+                <div class="feature-item">
+                    <i class="pi pi-shield"></i>
+                    <span>Secure Encrypted Framework</span>
+                </div>
+                <div class="feature-item">
+                    <i class="pi pi-sync"></i>
+                    <span>Real-time Synchronization</span>
+                </div>
+                <div class="feature-item">
+                    <i class="pi pi-chart-line"></i>
+                    <span>Advanced Analytics Engine</span>
+                </div>
+            </div>
+        </div>
+        <div class="abstract-blobs">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+        </div>
+    </div>
+
+    <!-- Right Login Section -->
+    <div class="auth-form-side">
+        <div class="form-container animate-fade-in">
+            <div class="form-header">
+                <h2>Clinical Access</h2>
+                <p>Enter your credentials to enter the command center</p>
+            </div>
+
+            <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-grid">
+                <div class="field-wrapper">
+                    <label for="username"><i class="pi pi-user mr-2"></i>Staff Identifier</label>
+                    <input pInputText id="username" type="text" [(ngModel)]="username" name="username" required
+                        autocomplete="off" placeholder="Enter Username" class="premium-input" />
+                </div>
+
+                <div class="field-wrapper">
+                    <label for="password"><i class="pi pi-shield mr-2"></i>Access Token</label>
+                    <p-password [(ngModel)]="password" name="password" [feedback]="false" [toggleMask]="true" required
+                        autocomplete="off" styleClass="w-full" inputStyleClass="premium-input w-full"
+                        placeholder="••••••••"></p-password>
+                </div>
+
+                <div class="form-actions mt-4">
+                    <div *ngIf="errorMessage" class="error-toast mb-4">
+                        <i class="pi pi-exclamation-circle"></i>
+                        <span>{{errorMessage}}</span>
+                    </div>
+
+                    <button pButton pRipple type="submit"
+                        label="{{ isLoading ? 'Verifying...' : 'Continue to Dashboard' }}"
+                        icon="{{ isLoading ? 'pi pi-spin pi-spinner' : 'pi pi-arrow-right' }}" iconPos="right"
+                        [loading]="isLoading" [disabled]="!loginForm.valid"
+                        class="p-button-primary w-full shadow-lg h-12"></button>
+                </div>
+
+                <div class="login-footer">
+                    <p>New staff member? <a routerLink="/signup">Register Access</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

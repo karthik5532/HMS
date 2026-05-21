@@ -1,0 +1,105 @@
+.doctor-dashboard-container {
+    padding: 1.5rem;
+    background-color: #f8fafc;
+    min-height: 100vh;
+}
+
+/* Animations */
+.animate-fadein {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+}
+
+.animate-bounce {
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+    50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+}
+
+/* Header Adjustments */
+.dashboard-header {
+    border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+/* Stat Cards */
+.stat-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Table Styling */
+:host ::ng-deep .p-datatable.p-datatable-sm .p-datatable-thead > tr > th {
+    background-color: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 1rem 0.75rem;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr {
+    transition: background-color 0.2s;
+}
+
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+    padding: 0.75rem;
+}
+
+:host ::ng-deep .p-paginator {
+    background: transparent;
+    border: none;
+    padding: 1rem;
+}
+
+/* PrimeNG Overrides for Premium Look */
+:host ::ng-deep .p-progressbar {
+    background-color: #f1f5f9;
+    border-radius: 9999px;
+}
+
+:host ::ng-deep .p-progressbar .p-progressbar-value {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+:host ::ng-deep .p-button.p-button-raised {
+    box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.4), 0 2px 4px -2px rgba(99, 102, 241, 0.4);
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 991px) {
+    .doctor-dashboard-container {
+        padding: 1rem;
+    }
+}
+
+/* Custom Textarea styling */
+textarea[pInputTextarea] {
+    transition: all 0.2s;
+}
+
+textarea[pInputTextarea]:focus {
+    background-color: rgba(99, 102, 241, 0.2) !important;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
+}
+
+/* Patient List micro-styling */
+.shadow-spinner {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #e2e8f0;
+}

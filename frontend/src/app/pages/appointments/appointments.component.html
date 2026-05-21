@@ -1,0 +1,183 @@
+<div class="appointment-workspace animate-fade-in">
+  
+  <!-- Premium Header -->
+  <header class="workspace-header">
+    <div class="h-main">
+      <div class="h-titles">
+        <h1>Clinical Queue Matrix <span>Live</span></h1>
+        <p>Real-time specialist consultation assignment board</p>
+      </div>
+      <div class="h-actions">
+         <p-button label="Add Walk-in Patient" icon="pi pi-plus" size="small" (onClick)="showEnrollModal = true"></p-button>
+      </div>
+    </div>
+    
+    <!-- Top Stats Bar -->
+    <div class="header-stats-bar">
+      <div class="stat-card">
+         <div class="s-icon text-blue-500 bg-blue-50"><i class="pi pi-users"></i></div>
+         <div class="s-data"><span>Waiting</span><strong>{{ stats.totalActive }}</strong></div>
+      </div>
+      <div class="stat-card">
+         <div class="s-icon text-orange-500 bg-orange-50"><i class="pi pi-bell"></i></div>
+         <div class="s-data"><span>In Consultation</span><strong>{{ stats.urgentCount }}</strong></div>
+      </div>
+      <div class="stat-card">
+         <div class="s-icon text-green-500 bg-green-50"><i class="pi pi-check-circle"></i></div>
+         <div class="s-data"><span>Completed</span><strong>{{ stats.completedCount }}</strong></div>
+      </div>
+      <div class="stat-card border-none">
+         <div class="s-icon text-purple-500 bg-purple-50"><i class="pi pi-hourglass"></i></div>
+         <div class="s-data"><span>Avg Wait Time</span><strong>{{ stats.avgWait }}</strong></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Master Detail Layout -->
+  <div class="clinical-layout">
+    
+    <!-- LEFT: Appt List Table -->
+    <div class="layout-master">
+       <div class="table-toolbar">
+         <div class="flex gap-2">
+            <p-button label="Active Queue" [icon]="currentTab === 'Active' ? 'pi pi-folder-open' : 'pi pi-folder'" [severity]="currentTab === 'Active' ? 'primary' : 'secondary'" [text]="currentTab !== 'Active'" (onClick)="setTab('Active')"></p-button>
+            <p-button label="Archive" [icon]="currentTab === 'Done' ? 'pi pi-check-square' : 'pi pi-check'" [severity]="currentTab === 'Done' ? 'primary' : 'secondary'" [text]="currentTab !== 'Done'" (onClick)="setTab('Done')"></p-button>
+         </div>
+         <div class="p-input-icon-left w-20rem">
+            <p-select [options]="doctors" [(ngModel)]="filterDoctor" (onChange)="applyFilter()" [showClear]="true" placeholder="Filter by Doctor" styleClass="w-full"></p-select>
+         </div>
+       </div>
+
+       <p-table [value]="filteredAppointments" [scrollable]="true" scrollHeight="calc(100vh - 350px)" styleClass="p-datatable-sm appointment-table" selectionMode="single" [(selection)]="selectedAppointment" dataKey="_id" (onRowSelect)="selectAppointment($event.data)">
+          <ng-template pTemplate="header">
+              <tr>
+                  <th>Patient Info</th>
+                  <th>Assigned Specialist</th>
+                  <th>Status</th>
+                  <th style="width: 100px">Time</th>
+              </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-app let-rowData>
+              <tr [pSelectableRow]="rowData" [class.row-selected]="selectedAppointment?._id === app._id">
+                  <td>
+                    <div class="td-patient">
+                      <p-avatar [label]="app.patientName.charAt(0)" shape="circle" styleClass="bg-blue-50 text-blue-600 font-bold"></p-avatar>
+                      <span class="font-bold text-slate-800">{{ app.patientName }}</span>
+                    </div>
+                  </td>
+                  <td><span class="text-slate-600 font-medium"><i class="pi pi-stethoscope text-xs mr-1 text-slate-400"></i> {{ app.doctorName }}</span></td>
+                  <td><p-tag [value]="app.status" [severity]="getSeverity(app.status)"></p-tag></td>
+                  <td><span class="text-xs font-bold text-slate-500">{{ app.arrivalTime | date:'shortTime' }}</span></td>
+              </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+              <tr>
+                  <td colspan="4" class="text-center p-5 text-slate-500">
+                      <i class="pi pi-folder-open text-4xl mb-3 block text-slate-300"></i>
+                      No {{ currentTab | lowercase }} appointments found.
+                  </td>
+              </tr>
+          </ng-template>
+       </p-table>
+    </div>
+
+    <!-- RIGHT: Selected Detail View -->
+    <div class="layout-detail" *ngIf="selectedAppointment">
+       <div class="detail-card animate-fade-in shadow-2">
+          
+          <div class="dc-header">
+             <div class="dc-avatar bg-blue-600">
+               {{ selectedAppointment.patientName.charAt(0) }}
+             </div>
+             <div class="dc-title">
+               <h2>{{ selectedAppointment.patientName }}</h2>
+               <p-tag [value]="selectedAppointment.status" [severity]="getSeverity(selectedAppointment.status)"></p-tag>
+             </div>
+             <p-button icon="pi pi-ellipsis-v" [text]="true" severity="secondary"></p-button>
+          </div>
+
+          <div class="dc-body">
+             <div class="info-block">
+               <label>Assigned Specialist</label>
+               <div class="val text-lg"><i class="pi pi-user-plus text-blue-500 mr-2"></i> {{ selectedAppointment.doctorName }}</div>
+             </div>
+             
+             <div class="info-block mt-4">
+               <label>Arrival Time</label>
+               <div class="val"><i class="pi pi-clock text-orange-500 mr-2"></i> {{ selectedAppointment.arrivalTime | date:'mediumTime' }}</div>
+             </div>
+
+             <div class="info-block highlight mt-4">
+               <label>Reason for Visit</label>
+               <div class="val">{{ selectedAppointment.reason || 'Unspecified by front desk.' }}</div>
+             </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="dc-actions" *ngIf="selectedAppointment.status !== 'Completed'">
+            <div class="flex gap-2 w-full">
+               <p-button *ngIf="selectedAppointment.status === 'Waiting'" label="Call to Cabin" icon="pi pi-volume-up" styleClass="w-full" (onClick)="updateStatus(selectedAppointment._id, 'In Consultation')"></p-button>
+               <p-button *ngIf="selectedAppointment.status === 'In Consultation'" label="Finish Consultation" icon="pi pi-check-circle" severity="success" styleClass="w-full" (onClick)="updateStatus(selectedAppointment._id, 'Completed')"></p-button>
+            </div>
+            <p-button label="Cancel Appointment" icon="pi pi-times" severity="danger" [text]="true" class="mt-2 w-full" (onClick)="updateStatus(selectedAppointment._id, 'Completed')"></p-button>
+          </div>
+          
+          <div class="dc-actions completed-state" *ngIf="selectedAppointment.status === 'Completed'">
+             <i class="pi pi-check-circle text-green-500 text-4xl mb-2"></i>
+             <h3 class="m-0 text-slate-800">Consultation Finished</h3>
+             <p class="text-sm text-slate-500 m-0 mt-1">Patient has been discharged or sent to billing.</p>
+          </div>
+
+       </div>
+    </div>
+    
+    <!-- Empty State for Detail -->
+    <div class="layout-detail" *ngIf="!selectedAppointment">
+       <div class="detail-empty shadow-1">
+          <i class="pi pi-id-card text-5xl text-slate-200"></i>
+          <p>Select a patient from the queue to view full clinical details and take action.</p>
+       </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: Fast Walk-In -->
+<p-dialog [(visible)]="showEnrollModal" [modal]="true" [style]="{width: '540px'}" [draggable]="false" [resizable]="false" styleClass="pharm-dialog shadow-4">
+  <ng-template pTemplate="header">
+    <div class="dialog-hdr" style="display:flex;align-items:center;">
+      <i class="pi pi-calendar-plus" style="color:#3b82f6;font-size:1.2rem;margin-right:10px;"></i>
+      <span style="font-weight:700;color:#1e293b;font-size:1.15rem;">Fast Walk-In Enrollment</span>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="content">
+    <div class="pharm-form" style="display:flex;flex-direction:column;gap:1.25rem;padding:1rem 0;">
+      
+      <div class="field" style="display:flex;flex-direction:column;gap:0.5rem;">
+        <label style="font-weight:700;color:#475569;font-size:0.85rem;"><i class="pi pi-user text-blue-500"></i> Patient Full Name <span class="req" style="color:#ef4444">*</span></label>
+        <input type="text" pInputText [(ngModel)]="newBooking.patientName" placeholder="e.g. John Doe" class="w-full" />
+      </div>
+      
+      <div class="field" style="display:flex;flex-direction:column;gap:0.5rem;">
+        <label style="font-weight:700;color:#475569;font-size:0.85rem;"><i class="pi pi-user-plus text-indigo-500"></i> Assign To Specialist <span class="req" style="color:#ef4444">*</span></label>
+        <p-select [options]="doctors" [(ngModel)]="newBooking.doctorName" placeholder="Select Doctor" styleClass="w-full" appendTo="body"></p-select>
+      </div>
+
+      <div class="field" style="display:flex;flex-direction:column;gap:0.5rem;">
+        <label style="font-weight:700;color:#475569;font-size:0.85rem;"><i class="pi pi-file-medical text-green-500"></i> Clinical Reason</label>
+        <input type="text" pInputText [(ngModel)]="newBooking.reason" placeholder="e.g. High fever, joint pain" class="w-full" />
+      </div>
+      
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer" style="padding-top:1rem;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:0.75rem;">
+      <p-button label="Cancel" icon="pi pi-times" severity="secondary" [text]="true" (onClick)="showEnrollModal = false"></p-button>
+      <p-button label="Book Immediate Slot" icon="pi pi-check" severity="success" (onClick)="bookNow()"></p-button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<p-toast></p-toast>

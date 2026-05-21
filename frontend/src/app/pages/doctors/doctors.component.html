@@ -1,0 +1,226 @@
+<div class="labs-page">
+  <p-toast></p-toast>
+  <p-confirmDialog [style]="{width:'420px'}"></p-confirmDialog>
+
+  <!-- Page Header -->
+  <div class="labs-header">
+    <div class="header-text">
+      <h1><i class="pi pi-users" style="color:#6366f1;margin-right:10px;"></i>Doctors & Staff Directory</h1>
+      <p>Personnel Management · Departments · Shift Shedules</p>
+    </div>
+    <div class="header-actions" style="display:flex; gap:1.5rem; align-items:center;">
+      <div class="view-toggle"
+        style="display:flex; background:rgba(255,255,255,0.15); border-radius:10px; padding:4px; gap:2px;">
+        <button class="toggle-btn" [class.active]="viewMode === 'table'" (click)="viewMode = 'table'" title="List View"
+          style="border:none; border-radius:8px; cursor:pointer; color:white; transition:all 0.2s;"
+          [ngStyle]="{'background': viewMode === 'table' ? 'rgba(255,255,255,0.25)' : 'transparent', 'padding': '8px 12px', 'opacity': viewMode === 'table' ? '1' : '0.7'}">
+          <i class="pi pi-list"></i>
+        </button>
+        <button class="toggle-btn" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" title="Grid View"
+          style="border:none; border-radius:8px; cursor:pointer; color:white; transition:all 0.2s;"
+          [ngStyle]="{'background': viewMode === 'grid' ? 'rgba(255,255,255,0.25)' : 'transparent', 'padding': '8px 12px', 'opacity': viewMode === 'grid' ? '1' : '0.7'}">
+          <i class="pi pi-th-large"></i>
+        </button>
+      </div>
+      <p-button label="Add Staff Member" icon="pi pi-plus" (onClick)="newDoctor={}; isEditing=false; showModal=true;"
+        styleClass="p-button-primary new-lab-btn"></p-button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-row">
+    <div class="stat-card total">
+      <div class="stat-icon"><i class="pi pi-users"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Total Staff</span>
+        <span class="stat-value">{{ totalCount }}</span>
+      </div>
+    </div>
+    <div class="stat-card pending">
+      <div class="stat-icon"><i class="pi pi-check-circle"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Available</span>
+        <span class="stat-value">{{ availableCount }}</span>
+      </div>
+    </div>
+    <div class="stat-card progress">
+      <div class="stat-icon"><i class="pi pi-comments"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">In Consultation</span>
+        <span class="stat-value">{{ consultationCount }}</span>
+      </div>
+    </div>
+    <div class="stat-card completed">
+      <div class="stat-icon"><i class="pi pi-briefcase"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">On Leave</span>
+        <span class="stat-value">{{ leaveCount }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Table View -->
+  <div class="table-card mt-4" *ngIf="viewMode === 'table'">
+    <p-table [value]="filteredDoctors" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5,10,15,25]"
+      [showCurrentPageReport]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} personnel"
+      styleClass="p-datatable-sm p-datatable-striped p-datatable-gridlines" [tableStyle]="{'min-width': '60rem'}"
+      [globalFilterFields]="['name','specialty']">
+
+      <ng-template pTemplate="caption">
+        <div class="table-caption">
+          <span class="p-input-icon-left search-wrap">
+            <i class="pi pi-search"></i>
+            <input pInputText type="text" [(ngModel)]="searchTerm" (input)="onSearch()"
+              placeholder="Search by name, specialty..." class="search-field" />
+          </span>
+          <div class="caption-right">
+            <span class="record-count">{{ filteredDoctors.length }} record(s)</span>
+            <p-button icon="pi pi-refresh" styleClass="p-button-text p-button-secondary" pTooltip="Refresh"
+              (onClick)="loadDoctors()"></p-button>
+          </div>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="name">Personnel <p-sortIcon field="name"></p-sortIcon></th>
+          <th pSortableColumn="specialty">Specialization <p-sortIcon field="specialty"></p-sortIcon></th>
+          <th>Status</th>
+          <th style="width:120px;text-align:center">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-doc>
+        <tr>
+          <td>
+            <div class="patient-cell">
+              <div class="patient-avatar">{{ doc.name?.charAt(0) || 'U' }}</div>
+              <strong>{{ doc.name }}</strong>
+            </div>
+          </td>
+          <td>
+            <span class="test-type-chip">{{ doc.specialty || 'General' }}</span>
+          </td>
+          <td>
+            <p-tag [value]="doc.status || 'Available'" [severity]="getStatusSeverity(doc.status)"
+              [rounded]="true"></p-tag>
+          </td>
+          <td>
+            <div class="action-btns">
+              <p-button icon="pi pi-calendar" styleClass="p-button-text p-button-success p-button-sm"
+                (onClick)="viewSchedule(doc)" pTooltip="View Schedule"></p-button>
+              <p-button icon="pi pi-pencil" styleClass="p-button-text p-button-info p-button-sm"
+                (onClick)="editDoctor(doc)" pTooltip="Edit Info"></p-button>
+              <p-button icon="pi pi-trash" styleClass="p-button-text p-button-danger p-button-sm"
+                (onClick)="deleteDoctor(doc._id || doc.id)" pTooltip="Remove"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="4">
+            <div class="empty-state">
+              <i class="pi pi-users" style="font-size:2.5rem;color:#94a3b8;"></i>
+              <p>No personnel records found.</p>
+              <p-button label="Add Staff Member" icon="pi pi-plus" styleClass="p-button-outlined"
+                (onClick)="newDoctor={}; isEditing=false; showModal=true;"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- Grid View -->
+  <div class="mt-4" *ngIf="viewMode === 'grid'">
+    <div class="table-caption mb-3"
+      style="background:white; padding:1rem; border-radius:12px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+      <span class="p-input-icon-left search-wrap">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text" [(ngModel)]="searchTerm" (input)="onSearch()"
+          placeholder="Search by name, specialty..." class="search-field" style="width:300px;" />
+      </span>
+      <div class="caption-right">
+        <span class="record-count">{{ filteredDoctors.length }} record(s)</span>
+        <p-button icon="pi pi-refresh" styleClass="p-button-text p-button-secondary" pTooltip="Refresh"
+          (onClick)="loadDoctors()"></p-button>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:1.5rem;">
+      <div *ngFor="let doc of filteredDoctors"
+        style="background:white; border-radius:16px; padding:1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; display:flex; flex-direction:column; gap:1rem; transition:transform 0.2s;"
+        onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div class="patient-avatar" style="width:48px;height:48px;font-size:1.2rem;">{{ doc.name?.charAt(0) || 'U' }}
+          </div>
+          <p-tag [value]="doc.status || 'Available'" [severity]="getStatusSeverity(doc.status)"
+            [rounded]="true"></p-tag>
+        </div>
+        <div>
+          <h3 style="margin:0; font-size:1.2rem; color:#1e293b;">{{ doc.name }}</h3>
+          <span class="test-type-chip" style="margin-top:0.5rem; display:inline-block;">{{ doc.specialty || 'General'
+            }}</span>
+        </div>
+        <div
+          style="display:flex; justify-content:space-between; padding-top:1rem; border-top:1px solid #f1f5f9; margin-top:auto;">
+          <p-button icon="pi pi-calendar" styleClass="p-button-text p-button-success" (onClick)="viewSchedule(doc)"
+            pTooltip="Schedule"></p-button>
+          <p-button icon="pi pi-pencil" styleClass="p-button-text p-button-info" (onClick)="editDoctor(doc)"
+            pTooltip="Edit"></p-button>
+          <p-button icon="pi pi-trash" styleClass="p-button-text p-button-danger"
+            (onClick)="deleteDoctor(doc._id || doc.id)" pTooltip="Remove"></p-button>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="filteredDoctors.length === 0"
+      style="background:white; border-radius:16px; margin-top:1rem;">
+      <i class="pi pi-users" style="font-size:2.5rem;color:#94a3b8;"></i>
+      <p>No personnel records found.</p>
+      <p-button label="Add Staff Member" icon="pi pi-plus" styleClass="p-button-outlined"
+        (onClick)="newDoctor={}; isEditing=false; showModal=true;"></p-button>
+    </div>
+  </div>
+</div>
+
+<!-- Forms & Modals -->
+<p-dialog [(visible)]="showModal" [header]="isEditing ? 'Modify Data' : 'New Specialist Onboarding'" [modal]="true"
+  [style]="{width: '500px'}" styleClass="lab-dialog">
+  <div class="dialog-form pt-3">
+    <div class="field">
+      <label>Full Name <span class="req">*</span></label>
+      <input type="text" pInputText [(ngModel)]="newDoctor.name" class="w-full">
+    </div>
+    <div class="field">
+      <label>Specialization <span class="req">*</span></label>
+      <p-select [options]="specialtyOptions" [(ngModel)]="newDoctor.specialty" placeholder="Select Specialization"
+        styleClass="w-full" appendTo="body"></p-select>
+    </div>
+    <div class="field">
+      <label>Initial Status</label>
+      <p-select [options]="statusOptions" [(ngModel)]="newDoctor.status" placeholder="Select Status" styleClass="w-full"
+        appendTo="body"></p-select>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancel" [text]="true" (onClick)="showModal=false"></p-button>
+    <p-button label="Save Data" icon="pi pi-save" (onClick)="saveDoctor()"></p-button>
+  </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="showScheduleModal" header="Weekly Duty Roster" [modal]="true" [style]="{width: '450px'}"
+  styleClass="lab-dialog">
+  <div class="p-2 schedule-board" *ngIf="activeDoctor">
+    <h3 class="mb-3 mt-0">Duty Plan: <span class="text-indigo-500">{{ activeDoctor.name }}</span></h3>
+    <div *ngFor="let s of weeklySchedule" class="flex justify-content-between py-2 border-bottom-1 border-gray-200">
+      <strong class="text-slate-600">{{ s.day }}</strong>
+      <div class="text-right">
+        <div class="text-sm font-semibold text-slate-800">{{ s.time }}</div>
+        <div class="text-xs text-green-500 font-bold opacity-70">{{ s.slots }}</div>
+      </div>
+    </div>
+  </div>
+</p-dialog>

@@ -1,0 +1,192 @@
+<div class="inventory-page">
+  <p-toast></p-toast>
+  <p-confirmDialog [style]="{width:'420px'}"></p-confirmDialog>
+
+  <!-- Header -->
+  <div class="inventory-header">
+    <div class="header-text">
+      <h1><i class="pi pi-box" style="color:#f59e0b;margin-right:10px;"></i>Asset & Equipment Registry</h1>
+      <p>Medical Equipment · Surgical Tools · Hospital Supplies</p>
+    </div>
+    <p-button label="Register Asset" icon="pi pi-plus" (onClick)="openNew()" styleClass="asset-add-btn"></p-button>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-row">
+    <div class="stat-card total">
+      <div class="stat-icon"><i class="pi pi-server"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Total Assets</span>
+        <span class="stat-value">{{ totalItems }}</span>
+      </div>
+    </div>
+    <div class="stat-card active">
+      <div class="stat-icon"><i class="pi pi-check-circle"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Active / In Stock</span>
+        <span class="stat-value">{{ activeCount }}</span>
+      </div>
+    </div>
+    <div class="stat-card maintenance">
+      <div class="stat-icon"><i class="pi pi-wrench"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Maintenance / In Use</span>
+        <span class="stat-value">{{ maintenanceCount }}</span>
+      </div>
+    </div>
+    <div class="stat-card critical">
+      <div class="stat-icon"><i class="pi pi-exclamation-circle"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Critical / Low</span>
+        <span class="stat-value">{{ criticalCount }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-bar-row">
+    <span class="p-input-icon-left search-wrap">
+      <i class="pi pi-search"></i>
+      <input pInputText type="text" [(ngModel)]="searchTerm" (input)="onSearch()"
+        placeholder="Search assets by name, category, or ID..." class="search-field" />
+    </span>
+    <span class="result-count">{{ filteredItems.length }} asset(s)</span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    <p-table
+      [value]="filteredItems"
+      [paginator]="true"
+      [rows]="10"
+      [loading]="loading"
+      [rowsPerPageOptions]="[5,10,20]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} assets"
+      styleClass="p-datatable-sm p-datatable-striped p-datatable-gridlines"
+      [tableStyle]="{'min-width':'50rem'}"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width:100px">Asset ID</th>
+          <th pSortableColumn="name">Equipment Name <p-sortIcon field="name"></p-sortIcon></th>
+          <th pSortableColumn="category">Category <p-sortIcon field="category"></p-sortIcon></th>
+          <th style="width:90px">In Stock</th>
+          <th>Location / Ward</th>
+          <th style="width:140px">Status</th>
+          <th style="width:100px;text-align:center">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td><span class="asset-id">#{{ item.id }}</span></td>
+          <td>
+            <div class="asset-name-cell">
+              <div class="asset-icon">{{ item.name?.charAt(0) || 'A' }}</div>
+              <div>
+                <strong>{{ item.name }}</strong>
+                <div class="asset-sub" *ngIf="item.manufacturer">{{ item.manufacturer }}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="cat-chip">{{ item.category }}</span></td>
+          <td>
+            <span class="stock-num" [class.low]="item.stock < 3">{{ item.stock || 1 }}</span>
+          </td>
+          <td>{{ item.location || item.ward || '—' }}</td>
+          <td>
+            <p-tag [value]="item.status || 'Active'" [severity]="getStatusSeverity(item.status)" [rounded]="true"></p-tag>
+          </td>
+          <td>
+            <div class="action-btns">
+              <p-button icon="pi pi-pencil" styleClass="p-button-text p-button-info p-button-sm" (onClick)="editItem(item)" pTooltip="Edit Asset"></p-button>
+              <p-button icon="pi pi-trash" styleClass="p-button-text p-button-danger p-button-sm" (onClick)="deleteItem(item)" pTooltip="Decommission"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <i class="pi pi-inbox" style="font-size:2.5rem;color:#94a3b8;"></i>
+              <p>No assets registered. Add your first asset.</p>
+              <p-button label="Register Asset" icon="pi pi-plus" styleClass="p-button-outlined p-button-warning" (onClick)="openNew()"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- Add/Edit Dialog -->
+<p-dialog
+  [(visible)]="showDialog"
+  [header]="isEditing ? 'Edit Asset' : 'Register New Asset'"
+  [modal]="true"
+  [style]="{width:'560px'}"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="inv-dialog"
+>
+  <ng-template pTemplate="header">
+    <div class="dialog-hdr">
+      <i class="pi pi-box" style="color:#f59e0b;font-size:1.2rem;margin-right:10px;"></i>
+      <span>{{ isEditing ? 'Edit Asset Details' : 'Register New Asset' }}</span>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="content">
+    <div class="inv-form">
+      <div class="form-row-2">
+        <div class="field">
+          <label><i class="pi pi-tag"></i> Asset / Equipment Name <span class="req">*</span></label>
+          <input type="text" pInputText [(ngModel)]="newItem.name" placeholder="e.g. Ventilator, BP Monitor" class="w-full" />
+        </div>
+        <div class="field">
+          <label><i class="pi pi-list"></i> Category <span class="req">*</span></label>
+          <p-select [(ngModel)]="newItem.category" [options]="categoryOptions"
+            placeholder="Select category" styleClass="w-full" appendTo="body"></p-select>
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div class="field">
+          <label><i class="pi pi-box"></i> Quantity / Count</label>
+          <p-inputNumber [(ngModel)]="newItem.stock" [min]="1" styleClass="w-full" placeholder="1"></p-inputNumber>
+        </div>
+        <div class="field">
+          <label><i class="pi pi-chart-bar"></i> Status</label>
+          <p-select [(ngModel)]="newItem.status" [options]="statusOptions"
+            placeholder="Select status" styleClass="w-full" appendTo="body"></p-select>
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div class="field">
+          <label><i class="pi pi-map-marker"></i> Ward / Location</label>
+          <input type="text" pInputText [(ngModel)]="newItem.location" placeholder="e.g. Ward 3, ICU" class="w-full" />
+        </div>
+        <div class="field">
+          <label><i class="pi pi-building"></i> Manufacturer</label>
+          <input type="text" pInputText [(ngModel)]="newItem.manufacturer" placeholder="e.g. Philips, Siemens" class="w-full" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label><i class="pi pi-file-edit"></i> Notes</label>
+        <input type="text" pInputText [(ngModel)]="newItem.notes" placeholder="Additional notes about this asset" class="w-full" />
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer">
+      <p-button label="Cancel" icon="pi pi-times" styleClass="p-button-text p-button-secondary" (onClick)="showDialog = false"></p-button>
+      <p-button [label]="isEditing ? 'Update Asset' : 'Register Asset'" icon="pi pi-check" styleClass="p-button-warning" (onClick)="saveItem()"></p-button>
+    </div>
+  </ng-template>
+</p-dialog>

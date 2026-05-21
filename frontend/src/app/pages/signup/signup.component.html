@@ -1,0 +1,91 @@
+<div class="split-auth-container">
+    <!-- Left Visual Side -->
+    <div class="auth-visual-side">
+        <div class="visual-overlay"></div>
+        <div class="visual-content">
+            <div class="logo-box flex flex-column align-items-center mb-5">
+                <div class="prime-logo-container bg-white border-circle p-4 shadow-8 relative mb-4">
+                    <i class="pi pi-heart-fill text-6xl text-emerald-500"></i>
+                    <i class="pi pi-plus absolute text-lg text-white bg-emerald-500 border-circle p-1 shadow-2" style="bottom: 15px; right: 15px;"></i>
+                </div>
+                <div class="text-center">
+                    <h1 class="visual-title text-white text-5xl font-black tracking-tighter m-0 uppercase">CITY CARE</h1>
+                    <p class="text-emerald-100 font-light tracking-widest text-sm uppercase mt-1">Medical Excellence</p>
+                </div>
+            </div>
+            <div class="visual-features">
+                <div class="feature-item">
+                    <i class="pi pi-user-plus"></i>
+                    <span>Personalized Staff Workspace</span>
+                </div>
+                <div class="feature-item">
+                    <i class="pi pi-database"></i>
+                    <span>Centralized Clinical Records</span>
+                </div>
+                <div class="feature-item">
+                    <i class="pi pi-lock"></i>
+                    <span>Enterprise-Grade Security</span>
+                </div>
+            </div>
+        </div>
+        <div class="abstract-blobs">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+        </div>
+    </div>
+
+    <!-- Right Signup Side -->
+    <div class="auth-form-side">
+        <div class="form-container animate-fade-in py-8">
+            <div class="form-header">
+                <h2>Create Profile</h2>
+                <p>Register your credentials to start managing patients</p>
+            </div>
+
+            <form (ngSubmit)="onSubmit()" #signupForm="ngForm" class="login-grid">
+                <div class="field-wrapper">
+                    <label for="name"><i class="pi pi-id-card mr-2"></i>Full Name</label>
+                    <input pInputText id="name" type="text" [(ngModel)]="userData.name" name="name" required
+                        autocomplete="off" placeholder="e.g. Dr. John Doe" class="premium-input" />
+                </div>
+
+                <div class="field-wrapper">
+                    <label for="username"><i class="pi pi-user mr-2"></i>Staff Username</label>
+                    <input pInputText id="username" type="text" [(ngModel)]="userData.username" name="username" required
+                        autocomplete="off" placeholder="Unique Identifier" class="premium-input" />
+                </div>
+
+                <div class="field-wrapper">
+                    <label for="password"><i class="pi pi-lock mr-2"></i>Create Password</label>
+                    <p-password [(ngModel)]="userData.password" name="password" [toggleMask]="true"
+                        required autocomplete="off" styleClass="w-full" inputStyleClass="premium-input w-full"
+                        placeholder="••••••••"></p-password>
+                </div>
+
+                <div class="field-wrapper">
+                    <label for="role"><i class="pi pi-briefcase mr-2"></i>Assign Role</label>
+                    <p-select [options]="roleOptions" [(ngModel)]="userData.role" name="role" 
+                         optionLabel="label" optionValue="value"
+                         placeholder="Select your department" styleClass="w-full premium-select" 
+                         appendTo="body"></p-select>
+                </div>
+
+                <div class="form-actions mt-4">
+                    <div *ngIf="errorMessage" class="error-toast mb-4">
+                        <i class="pi pi-exclamation-circle"></i>
+                        <span>{{errorMessage}}</span>
+                    </div>
+
+                    <button pButton pRipple type="submit" label="{{ isLoading ? 'Registering...' : 'Complete Registration' }}" 
+                        icon="{{ isLoading ? 'pi pi-spin pi-spinner' : 'pi pi-check' }}" 
+                        [loading]="isLoading" [disabled]="!signupForm.valid" 
+                        class="p-button-success w-full shadow-lg h-12"></button>
+                </div>
+
+                <div class="login-footer">
+                    <p>Already have a profile? <a routerLink="/login">Sign In instead</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,169 @@
+<div class="billing-page">
+
+  <!-- pure PrimeNG Toolbar Header -->
+  <p-toolbar styleClass="mb-4">
+    <div class="p-toolbar-group-start">
+        <div class="flex align-items-center gap-2">
+            <i class="pi pi-receipt text-3xl text-indigo-500"></i>
+            <div>
+              <h2 class="m-0 text-xl font-bold text-slate-800">Financial Records</h2>
+              <span class="text-sm text-slate-500">Patient billing, claims, and outstanding dues</span>
+            </div>
+        </div>
+    </div>
+    <div class="p-toolbar-group-end">
+        <p-button label="Generate Bill" icon="pi pi-plus" severity="primary" (onClick)="showNewBillModal = true"></p-button>
+    </div>
+  </p-toolbar>
+
+  <!-- pure PrimeNG Cards for KPIs -->
+  <div class="grid mb-4">
+    <!-- Total Outstanding -->
+    <div class="col-12 md:col-4">
+      <p-card>
+        <div class="flex justify-content-between align-items-start w-full">
+          <div class="flex flex-column">
+            <span class="text-sm font-semibold text-slate-500 mb-2 uppercase tracking-wide">Total Outstanding</span>
+            <span class="text-3xl font-bold text-slate-800">₹{{ totalOutstanding | number }}</span>
+          </div>
+          <div class="bg-red-50 text-red-500 border-circle p-3 flex align-items-center justify-content-center">
+            <i class="pi pi-exclamation-circle text-xl"></i>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- Pending Claims -->
+    <div class="col-12 md:col-4">
+      <p-card>
+        <div class="flex justify-content-between align-items-start w-full">
+          <div class="flex flex-column">
+            <span class="text-sm font-semibold text-slate-500 mb-2 uppercase tracking-wide">Pending Claims</span>
+            <span class="text-3xl font-bold text-slate-800">₹0</span>
+          </div>
+          <div class="bg-amber-50 text-amber-500 border-circle p-3 flex align-items-center justify-content-center">
+            <i class="pi pi-clock text-xl"></i>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- Today's Revenue -->
+    <div class="col-12 md:col-4">
+      <p-card>
+        <div class="flex justify-content-between align-items-start w-full">
+          <div class="flex flex-column">
+            <span class="text-sm font-semibold text-slate-500 mb-2 uppercase tracking-wide">Today's Revenue</span>
+            <span class="text-3xl font-bold text-slate-800">₹0</span>
+          </div>
+          <div class="bg-emerald-50 text-emerald-500 border-circle p-3 flex align-items-center justify-content-center">
+            <i class="pi pi-wallet text-xl"></i>
+          </div>
+        </div>
+      </p-card>
+    </div>
+  </div>
+
+  <!-- Pure PrimeNG Panel containing the Table -->
+  <p-panel header="Invoices List">
+    <ng-template pTemplate="icons">
+        <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')" placeholder="Search records..." class="p-inputtext-sm" style="width: 250px;" />
+        </span>
+    </ng-template>
+
+    <p-table #dt
+        [value]="invoices" 
+        [paginator]="true" 
+        [rows]="10" 
+        [rowsPerPageOptions]="[5,10,15,25]" 
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
+        styleClass="p-datatable-sm" 
+        [globalFilterFields]="['id', 'patientName', 'type']">
+        
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="id" style="width:120px">Invoice ID <p-sortIcon field="id"></p-sortIcon></th>
+            <th pSortableColumn="patientName">Patient Information <p-sortIcon field="patientName"></p-sortIcon></th>
+            <th pSortableColumn="type">Category <p-sortIcon field="type"></p-sortIcon></th>
+            <th pSortableColumn="amount" style="width:140px">Amount <p-sortIcon field="amount"></p-sortIcon></th>
+            <th pSortableColumn="date">Date <p-sortIcon field="date"></p-sortIcon></th>
+            <th>Status</th>
+            <th style="width:120px;text-align:right">Actions</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-inv>
+          <tr>
+            <td><span class="font-bold text-slate-500">#{{ inv.id }}</span></td>
+            <td>
+              <div class="flex align-items-center gap-3">
+                <p-avatar [label]="inv.patientName?.charAt(0) || 'U'" shape="circle" styleClass="bg-slate-100 text-slate-600 font-bold"></p-avatar>
+                <strong class="text-slate-800">{{ inv.patientName }}</strong>
+              </div>
+            </td>
+            <td>
+              <p-tag [value]="inv.type" severity="secondary"></p-tag>
+            </td>
+            <td>
+              <span class="font-bold text-slate-800 text-lg">₹{{ inv.amount | number }}</span>
+            </td>
+            <td>
+                <span class="text-slate-500 font-medium text-sm">{{ inv.date | date:'dd MMM yyyy' }}</span>
+            </td>
+            <td>
+              <p-tag [value]="inv.status" [severity]="getStatusSeverity(inv.status)" [rounded]="true"></p-tag>
+            </td>
+            <td class="text-right">
+              <p-button icon="pi pi-download" styleClass="p-button-text p-button-secondary p-button-sm mr-1" pTooltip="Download PDF"></p-button>
+              <p-button icon="pi pi-envelope" styleClass="p-button-text p-button-secondary p-button-sm" pTooltip="Email Invoice"></p-button>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7">
+              <div class="text-center p-5 flex flex-column align-items-center justify-content-center gap-3" style="min-height: 250px;">
+                <i class="pi pi-inbox text-6xl text-slate-300"></i>
+                <span class="text-slate-500 font-medium text-lg">No billing records found.</span>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+    </p-table>
+  </p-panel>
+
+  <!-- Generate Bill Modal -->
+  <p-dialog header="Generate New Invoice" [(visible)]="showNewBillModal" [modal]="true" [style]="{width: '450px'}">
+    <div class="flex flex-column gap-4 pt-3">
+        <div class="flex flex-column gap-2">
+            <label class="font-bold text-slate-800 text-sm">Patient Name *</label>
+            <input pInputText [(ngModel)]="newBill.patientName" placeholder="e.g. John Doe" class="w-full" />
+        </div>
+        
+        <div class="flex flex-column gap-2">
+            <label class="font-bold text-slate-800 text-sm">Service Category *</label>
+            <p-select [options]="categoryOptions" [(ngModel)]="newBill.type" placeholder="Select Service" appendTo="body" styleClass="w-full"></p-select>
+        </div>
+
+        <div class="flex flex-column gap-2">
+            <label class="font-bold text-slate-800 text-sm">Amount (₹) *</label>
+            <input pInputText type="number" [(ngModel)]="newBill.amount" placeholder="0.00" class="w-full" />
+        </div>
+
+        <div class="flex flex-column gap-2">
+            <label class="font-bold text-slate-800 text-sm">Current Status</label>
+            <p-select [options]="statusOptions" [(ngModel)]="newBill.status" appendTo="body" styleClass="w-full"></p-select>
+        </div>
+    </div>
+    
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" [text]="true" severity="secondary" (onClick)="showNewBillModal = false"></p-button>
+        <p-button label="Generate & Save" severity="primary" icon="pi pi-check" (onClick)="generateBill()" [disabled]="!newBill.patientName || !newBill.type || newBill.amount == null"></p-button>
+    </ng-template>
+  </p-dialog>
+
+</div>

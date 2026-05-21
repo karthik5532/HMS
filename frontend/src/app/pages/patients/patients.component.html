@@ -1,0 +1,373 @@
+<div class="patients-page">
+  <p-toast></p-toast>
+  <p-confirmDialog [style]="{width:'420px'}"></p-confirmDialog>
+
+  <!-- Page Header -->
+  <div class="patients-header">
+    <div class="header-text">
+      <h1><i class="pi pi-users" style="color:#6366f1;margin-right:10px;"></i>Clinical Patient Registry</h1>
+      <p>Master patient records, clinical history, and enrollment control</p>
+    </div>
+    <div class="header-actions">
+      <div class="view-toggle">
+        <button class="toggle-btn" [class.active]="viewMode === 'table'" (click)="viewMode = 'table'" title="List View">
+          <i class="pi pi-list"></i>
+        </button>
+        <button class="toggle-btn" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" title="Grid View">
+          <i class="pi pi-th-large"></i>
+        </button>
+      </div>
+      <p-button label="Add New Patient" icon="pi pi-plus" (onClick)="openAddModal()" styleClass="p-button-primary new-lab-btn"></p-button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-row mt-4">
+    <div class="stat-card total">
+      <div class="stat-icon"><i class="pi pi-folder-open"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Total Registered</span>
+        <span class="stat-value">{{ patientStats.total }}</span>
+      </div>
+    </div>
+    <div class="stat-card pending">
+      <div class="stat-icon"><i class="pi pi-heart"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Stable / Admitted</span>
+        <span class="stat-value">{{ patientStats.admitted }}</span>
+      </div>
+    </div>
+    <div class="stat-card red-alert">
+      <div class="stat-icon"><i class="pi pi-exclamation-triangle"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Critical / Emergency</span>
+        <span class="stat-value">{{ patientStats.emergency }}</span>
+      </div>
+    </div>
+    <div class="stat-card completed">
+      <div class="stat-icon"><i class="pi pi-sign-out"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Discharged</span>
+        <span class="stat-value">{{ patientStats.discharged }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Table View -->
+  <div class="table-card mt-4" *ngIf="viewMode === 'table'">
+    <p-table #dt
+      [value]="filteredPatients" 
+      [paginator]="true" 
+      [rows]="10" 
+      [rowsPerPageOptions]="[5,10,15,25]" 
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} patients"
+      styleClass="p-datatable-sm p-datatable-striped p-datatable-gridlines" 
+      [tableStyle]="{'min-width': '60rem'}"
+      [globalFilterFields]="['name','id','contact','gender','condition']">
+      
+      <ng-template pTemplate="caption">
+        <div class="table-caption">
+          <span class="p-input-icon-left search-wrap">
+            <i class="pi pi-search"></i>
+            <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')" placeholder="Search by name, ID, contact..." class="search-field" style="width:300px;" />
+          </span>
+          <div class="caption-right">
+            <span class="record-count">{{ filteredPatients.length }} record(s)</span>
+            <p-button icon="pi pi-refresh" styleClass="p-button-text p-button-secondary" pTooltip="Refresh" (onClick)="loadPatients()"></p-button>
+          </div>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="id" style="width:110px">ID <p-sortIcon field="id"></p-sortIcon></th>
+          <th pSortableColumn="name">Patient Name <p-sortIcon field="name"></p-sortIcon></th>
+          <th pSortableColumn="age" style="width:100px">Age/Gender <p-sortIcon field="age"></p-sortIcon></th>
+          <th pSortableColumn="contact">Contact Number <p-sortIcon field="contact"></p-sortIcon></th>
+          <th pSortableColumn="status">Status <p-sortIcon field="status"></p-sortIcon></th>
+          <th style="width:150px;text-align:center">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-p>
+        <tr>
+          <td><span class="text-slate-500 font-bold">#{{ p.id }}</span></td>
+          <td>
+            <div class="patient-cell cursor-pointer" (click)="selectPatient(p)">
+              <div class="patient-avatar" [style.background]="getStatusColor(p.status)">{{ p.name?.charAt(0) || 'P' }}</div>
+              <strong>{{ p.name }}</strong>
+            </div>
+          </td>
+          <td>
+            <span class="text-slate-600 font-medium">{{ p.gender }} | {{ p.age }} yrs</span>
+          </td>
+          <td><span class="text-slate-600 font-medium"><i class="pi pi-phone text-xs mr-1 text-slate-400"></i> {{ p.contact }}</span></td>
+          <td>
+            <p-tag [value]="p.status || 'Stable'" [severity]="getStatusSeverity(p.status)" [rounded]="true"></p-tag>
+          </td>
+          <td>
+            <div class="action-btns">
+              <p-button icon="pi pi-eye" styleClass="p-button-text p-button-primary p-button-sm" (onClick)="selectPatient(p)" pTooltip="Clinical Dossier"></p-button>
+              <p-button icon="pi pi-pencil" styleClass="p-button-text p-button-info p-button-sm" (onClick)="editPatient(p)" pTooltip="Edit Patient"></p-button>
+              <p-button icon="pi pi-sign-out" styleClass="p-button-text p-button-danger p-button-sm" (onClick)="dischargePatient(p)" pTooltip="Discharge"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <i class="pi pi-users" style="font-size:2.5rem;color:#94a3b8;"></i>
+              <p>No patient records found in registry.</p>
+              <p-button label="Enroll New Patient" icon="pi pi-plus" styleClass="p-button-outlined" (onClick)="openAddModal()"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- Grid View -->
+  <div class="cards-grid mt-4" *ngIf="viewMode === 'grid'">
+      <div class="table-caption mb-3" style="background:white; padding:1rem; border-radius:12px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+          <span class="p-input-icon-left search-wrap">
+            <i class="pi pi-search"></i>
+            <input pInputText type="text" [(ngModel)]="searchTerm" (input)="onSearch()" placeholder="Search by name, ID..." class="search-field" style="width:300px;" />
+          </span>
+          <div class="caption-right">
+            <span class="record-count">{{ filteredPatients.length }} patient(s)</span>
+            <p-button icon="pi pi-refresh" styleClass="p-button-text p-button-secondary" pTooltip="Refresh" (onClick)="loadPatients()"></p-button>
+          </div>
+      </div>
+      
+      <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:1.5rem;">
+          <div *ngFor="let p of filteredPatients" class="grid-card">
+              <div class="gc-header">
+                  <div class="patient-avatar" [style.background]="getStatusColor(p.status)">{{ p.name?.charAt(0) || 'P' }}</div>
+                  <p-tag [value]="p.status || 'Stable'" [severity]="getStatusSeverity(p.status)" [rounded]="true"></p-tag>
+              </div>
+              <div class="gc-body">
+                  <h3>{{ p.name }}</h3>
+                  <div class="gc-meta mt-2 mb-2"><i class="pi pi-hashtag mr-1"></i> {{ p.id }} <span class="mx-2">|</span> {{ p.gender }} <span class="mx-2">|</span> {{ p.age }} yrs</div>
+                  <div class="gc-meta"><i class="pi pi-phone mr-1"></i> {{ p.contact }}</div>
+              </div>
+              <div class="gc-footer">
+                  <p-button icon="pi pi-eye" styleClass="p-button-text p-button-primary" (onClick)="selectPatient(p)" pTooltip="Dossier"></p-button>
+                  <p-button icon="pi pi-pencil" styleClass="p-button-text p-button-info" (onClick)="editPatient(p)" pTooltip="Edit"></p-button>
+                  <p-button icon="pi pi-sign-out" styleClass="p-button-text p-button-danger" (onClick)="dischargePatient(p)" pTooltip="Discharge"></p-button>
+              </div>
+          </div>
+      </div>
+      
+      <div class="empty-state" *ngIf="filteredPatients.length === 0" style="background:white; border-radius:16px; margin-top:1rem;">
+          <i class="pi pi-users" style="font-size:2.5rem;color:#94a3b8;"></i>
+          <p>No personnel records found.</p>
+          <p-button label="Enroll New Patient" icon="pi pi-plus" styleClass="p-button-outlined" (onClick)="openAddModal()"></p-button>
+      </div>
+  </div>
+</div>
+
+<!-- ======================= -->
+<!-- Patient Dossier Dialog  -->
+<!-- ======================= -->
+<p-dialog [(visible)]="viewDossierModal" [modal]="true" [style]="{width: '900px'}" [breakpoints]="{'960px': '95vw'}" [draggable]="false" [resizable]="false" styleClass="dossier-dialog shadow-4">
+  <ng-template pTemplate="header">
+    <div class="dialog-hdr" style="display:flex;align-items:center;">
+      <i class="pi pi-folder-open" style="color:#3b82f6;font-size:1.2rem;margin-right:10px;"></i>
+      <span style="font-weight:700;color:#1e293b;font-size:1.15rem;">Clinical Dossier Overview</span>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="content">
+    <div *ngIf="selectedPatient" class="dossier-content" style="padding-top:0.5rem">
+      <div class="hero-card" style="background:linear-gradient(to right, #f8fafc, #f1f5f9); border:1px solid #e2e8f0; border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; display:flex; gap:1.5rem; align-items:center;">
+        <p-avatar [label]="selectedPatient.name.charAt(0)" size="xlarge" shape="circle" [style]="{ 'background-color': getStatusColor(selectedPatient.status), color: '#ffffff', 'width':'80px', 'height':'80px', 'font-size':'2.5rem' }"></p-avatar>
+        <div style="flex:1;">
+          <p-tag [value]="selectedPatient.status || 'Admitted'" [severity]="getStatusSeverity(selectedPatient.status)"></p-tag>
+          <h2 style="margin:0.5rem 0; font-size:1.8rem; font-weight:800; color:#0f172a;">{{ selectedPatient.name }}</h2>
+          <div style="display:flex; gap:1rem; flex-wrap:wrap; color:#64748b; font-size:0.85rem; font-weight:600;">
+            <span><i class="pi pi-hashtag"></i> {{ selectedPatient.id }}</span>
+            <span><i class="pi pi-user"></i> {{ selectedPatient.gender }} | {{ selectedPatient.age }} yrs</span>
+            <span><i class="pi pi-phone"></i> {{ selectedPatient.contact }}</span>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+          <p-button icon="pi pi-calendar-plus" label="Book Appt" [outlined]="true" size="small" (onClick)="openScheduleModal(selectedPatient); viewDossierModal=false;"></p-button>
+          <p-button icon="pi pi-file-medical" severity="success" label="Prescription" size="small" (onClick)="openPrescription(selectedPatient); viewDossierModal=false;"></p-button>
+        </div>
+      </div>
+
+      <p-tabs [value]="0">
+        <p-tablist>
+          <p-tab [value]="0"><i class="pi pi-book mr-2"></i> Condition Overview</p-tab>
+          <p-tab [value]="1"><i class="pi pi-heart mr-2"></i> Clinical Vitals</p-tab>
+          <p-tab [value]="2"><i class="pi pi-history mr-2"></i> Timeline</p-tab>
+        </p-tablist>
+        <p-tabpanels style="padding:1rem 0 0 0;">
+          <p-tabpanel [value]="0">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+              <p-card header="Diagnosis / Symptoms" styleClass="shadow-none border-1 border-gray-200">
+                <p style="color:#334155; line-height:1.6;">{{ selectedPatient.condition || 'No initial symptoms recorded.' }}</p>
+                <p-divider></p-divider>
+                <div>
+                  <div style="font-size:0.7rem; font-weight:800; color:#94a3b8; text-transform:uppercase;">Assigned Specialist / Unit</div>
+                  <div style="font-weight:700; color:#0f172a;">{{ selectedPatient.suggestedDoctor || 'General Internal Medicine' }}</div>
+                </div>
+              </p-card>
+              <p-card header="Management Notes" styleClass="shadow-none border-1 border-gray-200">
+                <div style="display:flex;flex-direction:column;align-items:center;padding:2rem 0;color:#94a3b8;gap:0.5rem;">
+                  <i class="pi pi-file-edit" style="font-size:2rem;opacity:0.5;"></i>
+                  <span>No active critical alerts for this record.</span>
+                </div>
+              </p-card>
+            </div>
+          </p-tabpanel>
+          <p-tabpanel [value]="1">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
+              <div style="background:#eff6ff;padding:1.5rem;border-radius:12px;border:1px solid #bfdbfe;display:flex;align-items:center;gap:1rem;"><i class="pi pi-chart-line text-blue-500 text-2xl"></i><div><div style="font-size:1.5rem;font-weight:800;color:#1e3a8a;">120/80</div><div style="font-size:0.75rem;font-weight:700;color:#60a5fa;text-transform:uppercase;">BP (mmHg)</div></div></div>
+              <div style="background:#fef2f2;padding:1.5rem;border-radius:12px;border:1px solid #fecaca;display:flex;align-items:center;gap:1rem;"><i class="pi pi-heart-fill text-red-500 text-2xl"></i><div><div style="font-size:1.5rem;font-weight:800;color:#7f1d1d;">74</div><div style="font-size:0.75rem;font-weight:700;color:#f87171;text-transform:uppercase;">Pulse (bpm)</div></div></div>
+              <div style="background:#fffbeb;padding:1.5rem;border-radius:12px;border:1px solid #fde68a;display:flex;align-items:center;gap:1rem;"><i class="pi pi-sun text-yellow-500 text-2xl"></i><div><div style="font-size:1.5rem;font-weight:800;color:#78350f;">98.6</div><div style="font-size:0.75rem;font-weight:700;color:#fbbf24;text-transform:uppercase;">Temp (°F)</div></div></div>
+              <div style="background:#f0fdf4;padding:1.5rem;border-radius:12px;border:1px solid #bbf7d0;display:flex;align-items:center;gap:1rem;"><i class="pi pi-filter text-green-500 text-2xl"></i><div><div style="font-size:1.5rem;font-weight:800;color:#14532d;">99%</div><div style="font-size:0.75rem;font-weight:700;color:#4ade80;text-transform:uppercase;">SpO2</div></div></div>
+            </div>
+          </p-tabpanel>
+          <p-tabpanel [value]="2">
+            <p-panel header="Clinical Activity History" styleClass="timeline-panel shadow-none border-1 border-gray-200">
+                <div style="border-left:2px solid #3b82f6; padding-left:1.5rem; position:relative; margin-bottom:1.5rem;">
+                   <div style="position:absolute;left:-7px;top:0;width:12px;height:12px;border-radius:50%;background:white;border:2px solid #3b82f6;"></div>
+                   <div style="font-size:0.75rem;font-weight:800;color:#3b82f6;margin-bottom:0.25rem;">Today, 09:45 AM</div>
+                   <div style="color:#334155;">Morning assessment completed by nursing staff. Stable.</div>
+                </div>
+                <div style="border-left:2px solid #cbd5e1; padding-left:1.5rem; position:relative;">
+                   <div style="position:absolute;left:-7px;top:0;width:12px;height:12px;border-radius:50%;background:white;border:2px solid #cbd5e1;"></div>
+                   <div style="font-size:0.75rem;font-weight:800;color:#94a3b8;margin-bottom:0.25rem;">Yesterday, 02:30 PM</div>
+                   <div style="color:#64748b;">Initial enrollment and triage assessment.</div>
+                </div>
+            </p-panel>
+          </p-tabpanel>
+        </p-tabpanels>
+      </p-tabs>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="footer">
+    <p-button label="Close Dossier" severity="secondary" [text]="true" (onClick)="viewDossierModal=false"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- Enrollment Overlay -->
+<p-dialog [header]="isEditing ? 'Modify Record' : 'Patient Enrollment'" [(visible)]="showModal" [modal]="true"
+  [style]="{width: '800px'}" [breakpoints]="{'960px': '90vw'}" [draggable]="false">
+
+  <div class="enroll-form">
+    <div class="form-row flex-row">
+      <div class="form-field flex-grow-1">
+        <label>Full Patient Name</label>
+        <input type="text" pInputText [(ngModel)]="newPatient.name" (ngModelChange)="validateNameLive()"
+          placeholder="Enter full name">
+        <small class="p-error" *ngIf="nameError">Only alphabets allowed.</small>
+      </div>
+      <div class="form-field w-80">
+        <label>Age</label>
+        <p-inputNumber [(ngModel)]="newPatient.age" [min]="0" placeholder="0"></p-inputNumber>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-field w-200">
+        <label>Contact (10-digits)</label>
+        <input type="text" pInputText [(ngModel)]="newPatient.contact" (ngModelChange)="validateContactLive()"
+          maxlength="10" (keypress)="onlyDigits($event)">
+        <small class="p-error" *ngIf="contactError">Only digits allowed.</small>
+      </div>
+      <div class="form-field w-120">
+        <label>Gender Selection</label>
+        <p-select [options]="genderOptions" [(ngModel)]="newPatient.gender"></p-select>
+      </div>
+    </div>
+
+    <div class="form-field full-width">
+      <label>Clinical Chief Complaints</label>
+      <textarea pTextarea [(ngModel)]="newPatient.condition" rows="4" placeholder="Describe symptoms..."></textarea>
+      <div class="ai-button-row">
+        <p-button label="Voice" [icon]="isListening ? 'pi pi-spin pi-spinner' : 'pi pi-microphone'"
+          [severity]="isListening ? 'danger' : 'secondary'" [text]="true" (onClick)="listenToSymptoms()"></p-button>
+        <p-button label="Analyze Symptoms" icon="pi pi-sparkles" [text]="true" (onClick)="analyzeSymptoms()"></p-button>
+      </div>
+    </div>
+
+    <div class="form-field full-width" *ngIf="suggestedSpecialist">
+      <div class="ai-hint">
+        <i class="pi pi-bolt"></i>
+        <span>AI Recommendation: <strong>{{suggestedSpecialist}}</strong> unit</span>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-field">
+        <label>Assign to Specialist / Unit</label>
+        <p-select [options]="doctors" [(ngModel)]="newPatient.suggestedDoctor" [filter]="true"></p-select>
+      </div>
+      <div class="form-field w-200">
+        <label>Initial Status</label>
+        <p-select [options]="statusOptions" [(ngModel)]="newPatient.status"></p-select>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Discard" severity="secondary" [text]="true" (onClick)="showModal = false"></p-button>
+    <p-button label="Add Patient" icon="pi pi-check" (onClick)="savePatient()"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- Prescription UI -->
+<p-dialog header="Generate Prescription" [(visible)]="showPrescriptionModal" [modal]="true" [style]="{width: '700px'}">
+  <div class="rx-form">
+    <div class="rx-row">
+      <div class="f-item w-full">
+        <label>Diagnosis</label>
+        <input type="text" pInputText [(ngModel)]="prescription.diagnosis" class="w-full">
+      </div>
+    </div>
+
+    <div class="meds-list mt-3">
+      <label class="section-title">Medication Regimen</label>
+      <div *ngFor="let m of prescription.medicines; let i = index" class="med-row">
+        <input type="text" pInputText [(ngModel)]="m.name" placeholder="Medicine" class="med-name">
+        <input type="text" pInputText [(ngModel)]="m.dosage" placeholder="Dose" class="med-qty">
+        <p-select [options]="frequencyOptions" [(ngModel)]="m.frequency" optionLabel="label" optionValue="value"
+          class="med-freq"></p-select>
+        <p-button icon="pi pi-trash" [text]="true" severity="danger" (onClick)="removeMedicineRow(i)"></p-button>
+      </div>
+      <p-button label="Add Line Item" icon="pi pi-plus" [text]="true" (onClick)="addMedicineRow()"></p-button>
+    </div>
+
+    <div class="rx-row mt-3 w-full">
+      <label>Advice / Instructions</label>
+      <textarea pTextarea [(ngModel)]="prescription.advice" rows="3" class="w-full"></textarea>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Confirm & Print" icon="pi pi-print" (onClick)="downloadPrescription()"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- Schedule Appointment UI -->
+<p-dialog [(visible)]="showScheduleModal" header="Schedule Follow-up" [modal]="true" [style]="{width: '450px'}">
+  <div style="display:flex; flex-direction:column; gap:1.2rem; padding:1rem 0;">
+    <div style="display:flex; flex-direction:column; gap:0.5rem;">
+      <label style="font-weight:700; color:#475569; font-size:0.85rem;">Assign To Specialist</label>
+      <p-select [options]="doctors" [(ngModel)]="scheduleData.doctorName" placeholder="Select Doctor" styleClass="w-full" appendTo="body"></p-select>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:0.5rem;">
+      <label style="font-weight:700; color:#475569; font-size:0.85rem;">Reason for Visit</label>
+      <input type="text" pInputText [(ngModel)]="scheduleData.reason" placeholder="e.g. Regular Checkup" class="w-full">
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+     <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="showScheduleModal = false"></p-button>
+     <p-button label="Confirm Slot" icon="pi pi-calendar-plus" (onClick)="confirmSchedule()"></p-button>
+  </ng-template>
+</p-dialog>

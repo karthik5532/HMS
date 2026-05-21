@@ -1,0 +1,244 @@
+<div class="pharmacy-page">
+  <p-toast></p-toast>
+  <p-confirmDialog [style]="{width:'420px'}"></p-confirmDialog>
+
+  <!-- Header -->
+  <div class="pharmacy-header">
+    <div class="header-text">
+      <h1><i class="pi pi-heart-fill" style="color:#10b981;margin-right:10px;"></i>Drug Dispensary</h1>
+      <p>Pharmacy Inventory · Stock Control · Medicine Management</p>
+    </div>
+    <div class="header-actions">
+      <div class="view-toggle">
+        <button class="toggle-btn" [class.active]="viewMode==='table'" (click)="viewMode='table'" title="Table View">
+          <i class="pi pi-list"></i>
+        </button>
+        <button class="toggle-btn" [class.active]="viewMode==='cards'" (click)="viewMode='cards'" title="Card View">
+          <i class="pi pi-th-large"></i>
+        </button>
+      </div>
+      <p-button label="Add Medicine" icon="pi pi-plus" (onClick)="openNew()" styleClass="p-button-success add-btn"></p-button>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-row">
+    <div class="stat-card total">
+      <div class="stat-icon"><i class="pi pi-database"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Total Medicines</span>
+        <span class="stat-value">{{ totalMeds }}</span>
+      </div>
+    </div>
+    <div class="stat-card in-stock">
+      <div class="stat-icon"><i class="pi pi-check-circle"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">In Stock</span>
+        <span class="stat-value">{{ inStockCount }}</span>
+      </div>
+    </div>
+    <div class="stat-card low-stock">
+      <div class="stat-icon"><i class="pi pi-exclamation-triangle"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Low Stock</span>
+        <span class="stat-value">{{ lowStockCount }}</span>
+      </div>
+    </div>
+    <div class="stat-card out-stock">
+      <div class="stat-icon"><i class="pi pi-times-circle"></i></div>
+      <div class="stat-info">
+        <span class="stat-label">Out of Stock</span>
+        <span class="stat-value">{{ outStockCount }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-bar-row">
+    <span class="p-input-icon-left search-wrap">
+      <i class="pi pi-search"></i>
+      <input pInputText type="text" [(ngModel)]="searchTerm" (input)="onSearch()"
+        placeholder="Search medicines by name, category, or code..." class="search-field" />
+    </span>
+    <span class="result-count">{{ filteredInventory.length }} medicine(s) found</span>
+  </div>
+
+  <!-- TABLE VIEW -->
+  <div class="table-card" *ngIf="viewMode === 'table'">
+    <p-table
+      [value]="filteredInventory"
+      [paginator]="true"
+      [rows]="10"
+      [loading]="loading"
+      [rowsPerPageOptions]="[5,10,20]"
+      styleClass="p-datatable-sm p-datatable-striped p-datatable-gridlines"
+      [tableStyle]="{'min-width':'55rem'}"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width:90px">Code</th>
+          <th pSortableColumn="name">Medicine Name <p-sortIcon field="name"></p-sortIcon></th>
+          <th pSortableColumn="category">Category <p-sortIcon field="category"></p-sortIcon></th>
+          <th pSortableColumn="stock" style="width:110px">Stock <p-sortIcon field="stock"></p-sortIcon></th>
+          <th pSortableColumn="price" style="width:110px">Price <p-sortIcon field="price"></p-sortIcon></th>
+          <th style="width:90px">Expiry</th>
+          <th style="width:120px">Availability</th>
+          <th style="width:100px;text-align:center">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td><span class="med-code">#{{ item.id }}</span></td>
+          <td>
+            <div class="med-name-cell">
+              <div class="med-avatar">{{ item.name?.charAt(0) || 'M' }}</div>
+              <div>
+                <strong>{{ item.name }}</strong>
+              </div>
+            </div>
+          </td>
+          <td><span class="category-chip">{{ item.category }}</span></td>
+          <td>
+            <span class="stock-val" [ngClass]="getStockClass(item.stock)">
+              {{ item.stock }} <small>units</small>
+            </span>
+          </td>
+          <td class="price-cell">₹{{ item.price }}</td>
+          <td>{{ item.expiry ? (item.expiry | date:'MMM yyyy') : 'N/A' }}</td>
+          <td>
+            <p-tag [value]="item.status || 'In Stock'" [severity]="getStatusSeverity(item.status)" [rounded]="true"></p-tag>
+          </td>
+          <td>
+            <div class="action-btns">
+              <p-button icon="pi pi-pencil" styleClass="p-button-text p-button-info p-button-sm" (onClick)="editItem(item)" pTooltip="Edit"></p-button>
+              <p-button icon="pi pi-trash" styleClass="p-button-text p-button-danger p-button-sm" (onClick)="deleteItem(item)" pTooltip="Remove"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8">
+            <div class="empty-state">
+              <i class="pi pi-inbox" style="font-size:2.5rem;color:#94a3b8;"></i>
+              <p>No medicines found. Add your first medicine.</p>
+              <p-button label="Add Medicine" icon="pi pi-plus" styleClass="p-button-outlined p-button-success" (onClick)="openNew()"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- CARD VIEW -->
+  <div class="cards-grid" *ngIf="viewMode === 'cards'">
+    <div class="med-card" *ngFor="let item of filteredInventory">
+      <div class="med-card-top">
+        <div class="med-card-icon">{{ item.name?.charAt(0) || 'M' }}</div>
+        <div class="med-card-header">
+          <strong>{{ item.name }}</strong>
+          <span class="category-chip">{{ item.category }}</span>
+        </div>
+        <div class="med-card-status">
+          <p-tag [value]="item.status || 'In Stock'" [severity]="getStatusSeverity(item.status)" [rounded]="true"></p-tag>
+        </div>
+      </div>
+      <div class="med-card-body">
+        <div class="med-detail">
+          <i class="pi pi-box"></i>
+          <span>Stock: <strong [ngClass]="getStockClass(item.stock)">{{ item.stock }} units</strong></span>
+        </div>
+        <div class="med-detail">
+          <i class="pi pi-indian-rupee" style="color:#10b981;"></i>
+          <span>Price: <strong>₹{{ item.price }}</strong></span>
+        </div>
+        <div class="med-detail" *ngIf="item.expiry">
+          <i class="pi pi-calendar" style="color:#f59e0b;"></i>
+          <span>Expires: <strong>{{ item.expiry | date:'MMM yyyy' }}</strong></span>
+        </div>
+        <div class="med-detail">
+          <i class="pi pi-tag" style="color:#6366f1;"></i>
+          <span>Code: <strong>#{{ item.id }}</strong></span>
+        </div>
+      </div>
+      <div class="med-card-footer">
+        <p-button label="Edit" icon="pi pi-pencil" styleClass="p-button-outlined p-button-info p-button-sm" [style]="{'flex':'1'}" (onClick)="editItem(item)"></p-button>
+        <p-button icon="pi pi-trash" styleClass="p-button-text p-button-danger p-button-sm" (onClick)="deleteItem(item)" pTooltip="Remove"></p-button>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="filteredInventory.length === 0">
+      <i class="pi pi-inbox" style="font-size:2.5rem;color:#94a3b8;"></i>
+      <p>No medicines found.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Medicine Dialog -->
+<p-dialog
+  [(visible)]="showDialog"
+  [header]="isEditing ? 'Edit Medicine' : 'Add New Medicine'"
+  [modal]="true"
+  [style]="{width:'540px'}"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="pharm-dialog"
+>
+  <ng-template pTemplate="header">
+    <div class="dialog-hdr">
+      <i class="pi pi-heart-fill" style="color:#10b981;font-size:1.2rem;margin-right:10px;"></i>
+      <span>{{ isEditing ? 'Edit Medicine Details' : 'Add New Medicine to Inventory' }}</span>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="content">
+    <div class="pharm-form">
+      <div class="form-row-2">
+        <div class="field">
+          <label><i class="pi pi-tag"></i> Medicine Name <span class="req">*</span></label>
+          <input type="text" pInputText [(ngModel)]="newItem.name" placeholder="e.g. Paracetamol 500mg" class="w-full" />
+        </div>
+        <div class="field">
+          <label><i class="pi pi-list"></i> Category <span class="req">*</span></label>
+          <p-select [(ngModel)]="newItem.category" [options]="categoryOptions"
+            placeholder="Select category" styleClass="w-full" appendTo="body"></p-select>
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div class="field">
+          <label><i class="pi pi-box"></i> Stock Count</label>
+          <p-inputNumber [(ngModel)]="newItem.stock" [min]="0" styleClass="w-full" placeholder="0"></p-inputNumber>
+        </div>
+        <div class="field">
+          <label><i class="pi pi-indian-rupee"></i> Unit Price (₹)</label>
+          <p-inputNumber [(ngModel)]="newItem.price" [min]="0" mode="currency" currency="INR" locale="en-IN" styleClass="w-full"></p-inputNumber>
+        </div>
+      </div>
+
+      <div class="form-row-2">
+        <div class="field">
+          <label><i class="pi pi-calendar"></i> Expiry Date</label>
+          <p-datepicker [(ngModel)]="newItem.expiry" dateFormat="yy-mm-dd" [showIcon]="true" appendTo="body" styleClass="w-full"></p-datepicker>
+        </div>
+        <div class="field">
+          <label><i class="pi pi-check-circle"></i> Availability Status</label>
+          <p-select [(ngModel)]="newItem.status" [options]="statusOptions"
+            placeholder="Select status" styleClass="w-full" appendTo="body"></p-select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label><i class="pi pi-building"></i> Manufacturer / Supplier</label>
+        <input type="text" pInputText [(ngModel)]="newItem.manufacturer" placeholder="e.g. Sun Pharma" class="w-full" />
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer">
+      <p-button label="Cancel" icon="pi pi-times" styleClass="p-button-text p-button-secondary" (onClick)="showDialog = false"></p-button>
+      <p-button [label]="isEditing ? 'Update Medicine' : 'Add to Inventory'" icon="pi pi-check" styleClass="p-button-success" (onClick)="saveItem()"></p-button>
+    </div>
+  </ng-template>
+</p-dialog>

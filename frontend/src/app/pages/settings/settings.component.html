@@ -1,0 +1,30 @@
+<div class="settings-container animate-fade-in">
+  <div class="content-header">
+    <h1>System Settings</h1>
+    <p class="text-muted">Configure hospital parameters and accessibility</p>
+  </div>
+
+  <div class="settings-grid mt-4">
+    <div class="premium-card glass-panel">
+      <h3>Hospital Profile</h3>
+      <div class="form-group mt-3">
+        <label>Hospital Name</label>
+        <input type="text" [(ngModel)]="hospitalInfo.name" class="form-input">
+      </div>
+      <div class="form-group">
+        <label>Address</label>
+        <textarea [(ngModel)]="hospitalInfo.address" class="form-input" rows="3"></textarea>
+      </div>
+      <button class="btn btn-primary">Save Changes</button>
+    </div>
+
+    <div class="premium-card glass-panel">
+      <h3>Access Control</h3>
+      <p class="text-muted">Current user level: Administrator</p>
+      <div class="mt-3">
+        <button class="btn btn-outline">Manage User Roles</button>
+        <button class="btn btn-outline mt-2">View Audit Logs</button>
+      </div>
+    </div>
+  </div>
+</div>

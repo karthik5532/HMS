@@ -1,0 +1,33 @@
+<div class="nav-brand">
+  <span class="greeting" *ngIf="currentUser">
+    Welcome back, {{ currentUser.role === 'Admin' ? 'Admin' : currentUser.name }} 👋
+  </span>
+</div>
+
+<div class="nav-actions">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" placeholder="Global search..." class="search-input">
+  </div>
+  
+  <div class="action-btn notifications">
+    <span>🔔</span>
+    <div class="badge">5</div>
+  </div>
+
+  <div class="auth-options" *ngIf="!currentUser">
+    <a routerLink="/login" [queryParams]="{ role: 'User' }" class="auth-link user-login">User Login</a>
+    <span class="divider">|</span>
+    <a routerLink="/login" [queryParams]="{ role: 'Admin' }" class="auth-link admin-login">Admin Login</a>
+  </div>
+
+  <div class="user-profile" *ngIf="currentUser">
+    <div class="avatar shadow-glow">
+      <img [src]="'https://ui-avatars.com/api/?name=' + (currentUser?.name || 'Staff') + '&background=4F46E5&color=fff'" [alt]="currentUser?.name || 'Staff'">
+    </div>
+    <div class="user-info">
+      <span class="name">{{ currentUser?.name || 'System Staff' }}</span>
+      <span class="role">{{ currentUser?.role || 'Guest Mode' }}</span>
+    </div>
+  </div>
+</div>
